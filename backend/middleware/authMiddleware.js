@@ -1,4 +1,3 @@
-
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
@@ -21,4 +20,13 @@ const protect = async (req, res, next) => {
     }
 };
 
-module.exports = { protect };
+const authorize = (...roles) => {
+    return (req, res, next) => {
+        if (!req.user || !roles.includes(req.user.role)) {
+            return res.status(403).json({ message: 'Forbidden: insufficient role permissions' });
+        }
+        next();
+    };
+};
+
+module.exports = { protect, authorize };
