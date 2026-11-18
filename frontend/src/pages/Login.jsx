@@ -17,7 +17,7 @@ const Login = () => {
       login(response.data);
       navigate(response.data.role === 'Instructor' ? '/instructor' : '/student');
     } catch (error) {
-      setError(error.response.data.message);
+      setError(error?.response?.data?.message || 'Unable to connect to the server. Please try again.');
     }
   };
 
