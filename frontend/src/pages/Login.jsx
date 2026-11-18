@@ -4,18 +4,20 @@ import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../axiosConfig';
 
 const Login = () => {
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({ email: '', password: '' });
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
     try {
       const response = await axiosInstance.post('/api/auth/login', formData);
       login(response.data);
       navigate(response.data.role === 'Instructor' ? '/instructor' : '/student');
     } catch (error) {
-      alert('Login failed. Please try again.');
+      setError(error.response.data.message);
     }
   };
 
@@ -23,6 +25,11 @@ const Login = () => {
     <div className="max-w-md mx-auto mt-20">
       <form onSubmit={handleSubmit} className="bg-white p-6 shadow-md rounded">
         <h1 className="text-2xl font-bold mb-4 text-center">Login</h1>
+        {error && (
+          <div className="mb-4 rounded bg-red-100 p-3 text-red-700">
+            {error}
+          </div>
+        )}
         <input
           type="email"
           placeholder="Email"
