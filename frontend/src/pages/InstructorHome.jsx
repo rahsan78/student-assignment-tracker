@@ -1,9 +1,31 @@
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import axiosInstance from '../axiosConfig';
 
 const InstructorHome = () => {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [assignments, setAssignments] = useState([]);
+  const [assignmentsLoaded, setAssignmentsLoaded] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchAssignments = async () => {
+      try {
+        const response = await axiosInstance.get('/api/assignments', {
+          headers: { Authorization: `Bearer ${user.token}` },
+        });
+        setAssignments(response.data);
+      } catch (error) {
+        setError('Failed to fetch assignments.');
+      } finally {
+        setAssignmentsLoaded(true);
+      }
+    };
+
+    fetchAssignments();
+  }, [user]);
 
   const handleLogout = () => {
     logout();
@@ -25,8 +47,23 @@ const InstructorHome = () => {
       <section className="mb-6 rounded bg-white p-6 shadow-md">
         <h2 className="mb-4 text-xl font-semibold">Assignments</h2>
         <ul className="space-y-3">
-          <li className="rounded border p-4">Research Paper — Due Nov 20</li>
-          <li className="rounded border p-4">Project Proposal — Due Nov 27</li>
+          {!assignmentsLoaded ? (
+            <li>Loading assignments...</li>
+          ) : error ? (
+            <li>
+              <div className="rounded bg-red-100 p-3 text-red-700">{error}</div>
+            </li>
+          ) : assignments.length === 0 ? (
+            <li>You have no assignments yet.</li>
+          ) : (
+            assignments.map((assignment) => (
+              <li key={assignment._id} className="rounded border p-4">
+                <h3 className="font-semibold">{assignment.title}</h3>
+                <p>{assignment.description}</p>
+                <p>Due {new Date(assignment.dueDate).toLocaleDateString()}</p>
+              </li>
+            ))
+          )}
         </ul>
       </section>
 
