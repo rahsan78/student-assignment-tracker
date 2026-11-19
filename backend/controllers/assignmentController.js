@@ -1,5 +1,14 @@
 const Assignment = require('../models/Assignment');
 
+const getInstructorAssignments = async (req, res) => {
+  try {
+    const assignments = await Assignment.find({ createdBy: req.user._id }).sort({ dueDate: 1 });
+    return res.status(200).json(assignments);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
 const createAssignment = async (req, res) => {
   const { title, description, dueDate } = req.body;
 
@@ -26,4 +35,4 @@ const createAssignment = async (req, res) => {
   }
 };
 
-module.exports = { createAssignment };
+module.exports = { createAssignment, getInstructorAssignments };
