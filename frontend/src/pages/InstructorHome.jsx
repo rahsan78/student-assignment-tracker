@@ -15,6 +15,7 @@ const InstructorHome = () => {
       <h1 className="mb-6 text-3xl font-bold">Instructor Home</h1>
 
       <button
+        onClick={() => navigate('/create-assignment')}
         type="button"
         className="mb-6 rounded bg-blue-600 px-4 py-2 text-white"
       >
