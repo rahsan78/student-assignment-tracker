@@ -7,6 +7,7 @@ import Tasks from './pages/Tasks';
 import ProtectedRoute from './components/ProtectedRoute';
 import StudentHome from './pages/StudentHome';
 import InstructorHome from './pages/InstructorHome';
+import CreateAssignment from './pages/CreateAssignment';
 
 function App() {
   return (
@@ -30,6 +31,14 @@ function App() {
           element={
             <ProtectedRoute allowedRole="Instructor">
               <InstructorHome />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/create-assignment"
+          element={
+            <ProtectedRoute allowedRole="Instructor">
+              <CreateAssignment />
             </ProtectedRoute>
           }
         />
