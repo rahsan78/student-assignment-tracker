@@ -16,7 +16,12 @@ const getStudentExtensionRequests = async (req, res) => {
 
 const getPendingExtensionRequests = async (req, res) => {
   try {
-    const extensionRequests = await ExtensionRequest.find({ status: 'Pending' })
+    const assignments = await Assignment.find({ createdBy: req.user._id }).select('_id');
+    const assignmentIds = assignments.map((assignment) => assignment._id);
+    const extensionRequests = await ExtensionRequest.find({
+      status: 'Pending',
+      assignment: { $in: assignmentIds },
+    })
       .populate('assignment', 'title dueDate')
       .populate('student', 'name email')
       .sort({ requestedAt: 1 });
@@ -83,6 +88,17 @@ const decideExtensionRequest = async (req, res) => {
       return res.status(404).json({ message: 'Extension request not found' });
     }
 
+    const assignment = await Assignment.findById(extensionRequest.assignment);
+    if (!assignment) {
+      return res.status(404).json({ message: 'Assignment not found' });
+    }
+
+    if (assignment.createdBy.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        message: 'You can only decide requests for your own assignments',
+      });
+    }
+
     if (extensionRequest.status !== 'Pending') {
       return res.status(409).json({ message: 'This extension request has already been decided' });
     }
@@ -108,11 +124,6 @@ const decideExtensionRequest = async (req, res) => {
     }
 
     if (status === 'Approved') {
-      const assignment = await Assignment.findById(extensionRequest.assignment);
-      if (!assignment) {
-        return res.status(404).json({ message: 'Assignment not found' });
-      }
-
       const extendedDueDate = new Date(assignment.dueDate);
       extendedDueDate.setUTCDate(extendedDueDate.getUTCDate() + 2);
       extensionRequest.extendedDueDate = extendedDueDate;
