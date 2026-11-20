@@ -18,6 +18,10 @@ const extensionRequestSchema = new mongoose.Schema({
     enum: ['Pending', 'Approved', 'Rejected'],
     default: 'Pending',
   },
+  decisionComment: { type: String, trim: true, default: '' },
+  decidedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  decidedAt: { type: Date },
+  extendedDueDate: { type: Date, default: null },
 });
 
 extensionRequestSchema.index({ assignment: 1, student: 1 }, { unique: true });
