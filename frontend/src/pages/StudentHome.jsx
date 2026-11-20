@@ -3,6 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../axiosConfig';
 
+const getDueDateLabel = (assignment) => {
+  const originalDueDate = new Date(assignment.dueDate).toLocaleDateString();
+  if (!assignment.extendedDueDate) {
+    return `Due ${originalDueDate}`;
+  }
+
+  const extendedDueDate = new Date(assignment.extendedDueDate).toLocaleDateString();
+  return `Original due date ${originalDueDate}; extended due date ${extendedDueDate}`;
+};
+
 const StudentHome = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -101,58 +111,76 @@ const StudentHome = () => {
           ) : assignments.length === 0 ? (
             <li>You have no assignments yet.</li>
           ) : (
-            assignments.map((assignment) => (
-              <li key={assignment._id} className="rounded border p-4">
-                <h3 className="font-semibold">{assignment.title}</h3>
-                <p>{assignment.description}</p>
-                <p>Due {new Date(assignment.dueDate).toLocaleDateString()}</p>
-                <p>Due status: {assignment.dueStatus}</p>
-                <button
-                  type="button"
-                  className="mt-3 rounded bg-blue-600 px-4 py-2 text-white"
-                  onClick={() => {
-                    setRequestingAssignmentId(
-                      requestingAssignmentId === assignment._id ? null : assignment._id
-                    );
-                    setRequestReason('');
-                    setRequestError('');
-                    setRequestSuccessAssignmentId(null);
-                  }}
-                >
-                  Request extension
-                </button>
-                {requestingAssignmentId === assignment._id && (
-                  <form
-                    className="mt-3"
-                    onSubmit={(e) => handleExtensionRequestSubmit(e, assignment._id)}
-                  >
-                    {requestError && (
-                      <div className="mb-3 rounded bg-red-100 p-3 text-red-700">
-                        {requestError}
-                      </div>
-                    )}
-                    <textarea
-                      required
-                      placeholder="Reason for extension"
-                      value={requestReason}
-                      onChange={(e) => setRequestReason(e.target.value)}
-                      className="mb-3 w-full rounded border p-2"
-                    />
-                    <button
-                      type="submit"
-                      className="rounded bg-blue-600 px-4 py-2 text-white"
-                    >
-                      Submit request
-                    </button>
-                  </form>
-                )}
-                {requestSuccessAssignmentId === assignment._id && (
-                  <p className="mt-3 rounded bg-green-100 p-3 text-green-700">
-                    Your request is pending
-                  </p>
-                )}
-              </li>
-            ))
+            assignments.map((assignment) => {
+              const existingRequest = extensionRequests.find(
+                (extensionRequest) =>
+                  String(extensionRequest.assignment?._id || extensionRequest.assignment) ===
+                  String(assignment._id)
+              );
+
+              return (
+                <li key={assignment._id} className="rounded border p-4">
+                  <h3 className="font-semibold">{assignment.title}</h3>
+                  <p>{assignment.description}</p>
+                  <p>{getDueDateLabel(assignment)}</p>
+                  <p>Due status: {assignment.dueStatus}</p>
+                  {!extensionRequestsLoaded ? (
+                    <p className="mt-3">Loading extension request status...</p>
+                  ) : existingRequest ? (
+                    <p className="mt-3">
+                      Extension request status: {existingRequest.status}
+                    </p>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        className="mt-3 rounded bg-blue-600 px-4 py-2 text-white"
+                        onClick={() => {
+                          setRequestingAssignmentId(
+                            requestingAssignmentId === assignment._id ? null : assignment._id
+                          );
+                          setRequestReason('');
+                          setRequestError('');
+                          setRequestSuccessAssignmentId(null);
+                        }}
+                      >
+                        Request extension
+                      </button>
+                      {requestingAssignmentId === assignment._id && (
+                        <form
+                          className="mt-3"
+                          onSubmit={(e) => handleExtensionRequestSubmit(e, assignment._id)}
+                        >
+                          {requestError && (
+                            <div className="mb-3 rounded bg-red-100 p-3 text-red-700">
+                              {requestError}
+                            </div>
+                          )}
+                          <textarea
+                            required
+                            placeholder="Reason for extension"
+                            value={requestReason}
+                            onChange={(e) => setRequestReason(e.target.value)}
+                            className="mb-3 w-full rounded border p-2"
+                          />
+                          <button
+                            type="submit"
+                            className="rounded bg-blue-600 px-4 py-2 text-white"
+                          >
+                            Submit request
+                          </button>
+                        </form>
+                      )}
+                    </>
+                  )}
+                  {requestSuccessAssignmentId === assignment._id && (
+                    <p className="mt-3 rounded bg-green-100 p-3 text-green-700">
+                      Your request is pending
+                    </p>
+                  )}
+                </li>
+              );
+            })
           )}
         </ul>
       </section>
@@ -170,7 +198,7 @@ const StudentHome = () => {
             <ul className="space-y-2">
               {dueSoonAssignments.map((assignment) => (
                 <li key={assignment._id}>
-                  {assignment.title} — Due {new Date(assignment.dueDate).toLocaleDateString()}
+                  {assignment.title} — {getDueDateLabel(assignment)}
                 </li>
               ))}
             </ul>
@@ -188,7 +216,7 @@ const StudentHome = () => {
             <ul className="space-y-2">
               {overdueAssignments.map((assignment) => (
                 <li key={assignment._id}>
-                  {assignment.title} — Due {new Date(assignment.dueDate).toLocaleDateString()}
+                  {assignment.title} — {getDueDateLabel(assignment)}
                 </li>
               ))}
             </ul>
@@ -214,13 +242,22 @@ const StudentHome = () => {
                   {extensionRequest.assignment?.title || 'Assignment unavailable'}
                 </h3>
                 <p>
-                  Due{' '}
+                  Original due date{' '}
                   {extensionRequest.assignment?.dueDate
                     ? new Date(extensionRequest.assignment.dueDate).toLocaleDateString()
                     : 'date unavailable'}
                 </p>
+                {extensionRequest.extendedDueDate && (
+                  <p>
+                    Extended due date{' '}
+                    {new Date(extensionRequest.extendedDueDate).toLocaleDateString()}
+                  </p>
+                )}
                 <p>Reason: {extensionRequest.reason}</p>
                 <p>Status: {extensionRequest.status}</p>
+                {extensionRequest.decisionComment && (
+                  <p>Instructor comment: {extensionRequest.decisionComment}</p>
+                )}
                 <p>
                   Requested{' '}
                   {new Date(extensionRequest.requestedAt).toLocaleDateString()}
