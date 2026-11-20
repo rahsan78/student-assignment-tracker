@@ -10,6 +10,12 @@ const assignmentSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    attachment: {
+      originalName: { type: String },
+      storedName: { type: String },
+      mimeType: { type: String },
+      size: { type: Number },
+    },
   },
   { timestamps: true }
 );
