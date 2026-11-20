@@ -1,5 +1,16 @@
 const Assignment = require('../models/Assignment');
 const ExtensionRequest = require('../models/ExtensionRequest');
+const fs = require('fs/promises');
+
+const deleteUploadedFile = async (file) => {
+  if (!file) return;
+
+  try {
+    await fs.unlink(file.path);
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+};
 
 const getDueStatus = (dueDate) => {
   const today = new Date();
@@ -63,11 +74,21 @@ const createAssignment = async (req, res) => {
   const { title, description, dueDate } = req.body;
 
   if (typeof title !== 'string' || !title.trim()) {
+    try {
+      await deleteUploadedFile(req.file);
+    } catch (error) {
+      return res.status(500).json({ message: error.message });
+    }
     return res.status(400).json({ message: 'Title is required' });
   }
 
   const parsedDueDate = new Date(dueDate);
   if (Number.isNaN(parsedDueDate.getTime()) || parsedDueDate <= new Date()) {
+    try {
+      await deleteUploadedFile(req.file);
+    } catch (error) {
+      return res.status(500).json({ message: error.message });
+    }
     return res.status(400).json({ message: 'Due date must be a valid future date' });
   }
 
@@ -77,10 +98,23 @@ const createAssignment = async (req, res) => {
       description,
       dueDate: parsedDueDate,
       createdBy: req.user._id,
+      ...(req.file && {
+        attachment: {
+          originalName: req.file.originalname,
+          storedName: req.file.filename,
+          mimeType: req.file.mimetype,
+          size: req.file.size,
+        },
+      }),
     });
 
     return res.status(201).json(assignment);
   } catch (error) {
+    try {
+      await deleteUploadedFile(req.file);
+    } catch (cleanupError) {
+      console.error('Failed to delete uploaded file after assignment creation failed:', cleanupError);
+    }
     return res.status(500).json({ message: error.message });
   }
 };
