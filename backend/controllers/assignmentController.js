@@ -1,4 +1,5 @@
 const Assignment = require('../models/Assignment');
+const ExtensionRequest = require('../models/ExtensionRequest');
 
 const getDueStatus = (dueDate) => {
   const today = new Date();
@@ -27,10 +28,30 @@ const getInstructorAssignments = async (req, res) => {
 const getStudentAssignments = async (req, res) => {
   try {
     const assignments = await Assignment.find().sort({ dueDate: 1 }).lean();
-    const assignmentsWithDueStatus = assignments.map((assignment) => ({
-      ...assignment,
-      dueStatus: getDueStatus(assignment.dueDate),
-    }));
+    const approvedRequests = await ExtensionRequest.find({
+      student: req.user._id,
+      status: 'Approved',
+    }).select('assignment extendedDueDate').lean();
+    const extendedDueDates = new Map(
+      approvedRequests.map((request) => [
+        request.assignment.toString(),
+        request.extendedDueDate,
+      ])
+    );
+    const assignmentsWithDueStatus = assignments
+      .map((assignment) => {
+        const extendedDueDate = extendedDueDates.get(assignment._id.toString()) || null;
+        return {
+          ...assignment,
+          extendedDueDate,
+          dueStatus: getDueStatus(extendedDueDate || assignment.dueDate),
+        };
+      })
+      .sort(
+        (first, second) =>
+          new Date(first.extendedDueDate || first.dueDate) -
+          new Date(second.extendedDueDate || second.dueDate)
+      );
 
     return res.status(200).json(assignmentsWithDueStatus);
   } catch (error) {
