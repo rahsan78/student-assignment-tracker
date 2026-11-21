@@ -1,6 +1,6 @@
 # Student Assignment Tracker
 
-Live demo: [http://3.25.108.52](http://3.25.108.52). The address changes after an instance stop and start.
+Live demo: [http://15.134.128.153](http://15.134.128.153) (address checked 21 November 2026; it may change after the EC2 instance is stopped and started).
 
 Student Assignment Tracker helps students keep track of shared assignments, due dates, and extension requests. It supports two roles: Students view assignments and request extensions; Instructors create assignments and manage extension requests for assignments they own.
 
@@ -84,7 +84,7 @@ The backend runs on port 5001 by default, and the frontend development server ru
 
 Optional checks: run `pm2 list` from `~`; run `pm2 logs backend --lines 10 --nostream` from `~/student-assignment-tracker/frontend`.
 
-**4. Configuration and access:** Backend environment variable names are `MONGO_URI`, `JWT_SECRET`, and `PORT`; do not include their values here. The Atlas allowlist uses single-address (`/32`) entries for the EC2 instance's public IP and the developer's own public IP, not `0.0.0.0/0`. The demo URL is `http://3.25.108.52`. The EC2 public IP changes after a stop and start, so add the new IP to the Atlas allowlist, then run `pm2 restart backend` to reconnect to the database.
+**4. Configuration and access:** Backend environment variable names are `MONGO_URI`, `JWT_SECRET`, and `PORT`; do not include their values here. The Atlas allowlist uses single-address (`/32`) entries for the EC2 instance's public IP and the developer's own public IP, not `0.0.0.0/0`. The demo URL is `http://15.134.128.153`. The EC2 public IP changes after a stop and start, so add the new IP to the Atlas allowlist, then run `pm2 restart backend` to reconnect to the database.
 
 ## Known limitations
 
