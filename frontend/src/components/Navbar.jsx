@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const homePath = user?.role === 'Instructor' ? '/instructor' : '/student';
 
   const handleLogout = () => {
     logout();
@@ -12,11 +13,14 @@ const Navbar = () => {
 
   return (
     <nav className="bg-blue-600 text-white p-4 flex justify-between items-center">
-      <Link to="/" className="text-2xl font-bold">Student Assignment Tracker</Link>
+      <Link to={user ? homePath : '/login'} className="text-2xl font-bold">
+        Student Assignment Tracker
+      </Link>
       <div>
         {user ? (
           <>
             <span className="mr-4">Welcome, {user.name}</span>
+            <Link to={homePath} className="mr-4">Home</Link>
             <Link to="/profile" className="mr-4">Profile</Link>
             <button
               onClick={handleLogout}
